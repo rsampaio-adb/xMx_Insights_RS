@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xMX Insights Dashboard</title>
+<style>
+:root{
+  --accent:#E4002B; --accent-hover:#B80020; --accent-soft:#FCE9EC;
+  --header:#1B1B1B;
+  --bg:#F4F4F4; --card:#FFFFFF; --surface:#F5F5F5;
+  --ink:#1A1A1A; --text:#2B2B2B; --muted:#6A6A6A; --faint:#8A8A8A; --line:#E4E4E4; --line-strong:#D0D0D0;
+  --positive:#0A7A3D; --negative:#D7373F;
+  --radius:10px; --radius-sm:6px; --pill:999px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --hdrH:60px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ---------- top header ---------- */
+.topbar{position:sticky;top:0;z-index:50;height:var(--hdrH);background:var(--header);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:14px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand svg{flex:none}
+.apptitle{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.draft{font-size:10px;font-weight:800;letter-spacing:.06em;background:var(--accent);color:#fff;padding:4px 9px;border-radius:var(--pill);white-space:nowrap;flex:none}
+.freshness{font-size:11px;color:#bbb;white-space:nowrap}
+.topactions{display:flex;gap:10px;flex:none}
+.tbtn{font-family:var(--font);font-size:13px;font-weight:600;padding:8px 15px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid #4a4a4a;background:transparent;color:#fff;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+.tbtn:hover{background:#2c2c2c}
+
+/* ---------- app shell ---------- */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr) 300px}
+.rail,.panel{background:var(--card)}
+.rail{border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:var(--hdrH);height:calc(100vh - var(--hdrH));overflow:auto}
+.panel{border-left:1px solid var(--line);padding:18px 18px;position:sticky;top:var(--hdrH);height:calc(100vh - var(--hdrH));overflow:auto}
+.main{padding:22px 26px 60px;min-width:0}
+.tabpane{display:none}
+.tabpane.on{display:block}
+@media(max-width:1150px){.app{grid-template-columns:1fr}.rail,.panel{position:static;height:auto;border:0;border-bottom:1px solid var(--line)}}
+
+/* ---------- rail nav ---------- */
+.railhead{font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.08em;text-transform:uppercase;padding:2px 10px 8px}
+.navitem{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;padding:10px;border-radius:8px;cursor:pointer;border-left:3px solid transparent}
+.navitem:hover{background:var(--surface)}
+.navitem.on{background:var(--accent-soft);border-left-color:var(--accent)}
+.navnum{width:22px;height:22px;border-radius:50%;background:#EBEBEB;color:var(--muted);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.navitem.on .navnum{background:var(--accent);color:#fff}
+.navtitle{font-size:13.5px;font-weight:600;color:var(--text)}
+.navitem.on .navtitle{color:var(--accent-hover)}
+.navsub{font-size:11.5px;color:var(--faint);margin-top:1px;line-height:1.35}
+.railnote{font-size:11px;color:var(--faint);padding:14px 10px 4px;margin-top:10px;border-top:1px solid var(--line);line-height:1.5}
+.railnote code{background:var(--surface);border-radius:3px;padding:0 3px;font-size:10.5px}
+
+/* ---------- page header (main) ---------- */
+.gate{font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:2px 0 6px}
+.main h1{font-size:22px;font-weight:800;color:var(--ink);margin:0 0 4px}
+.psub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:var(--pill);padding:4px 12px;font-size:12px;color:var(--muted);white-space:nowrap}
+.chip b{color:var(--text);font-weight:600}
+
+/* ---------- right panel controls ---------- */
+.panelhead{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;margin:0 0 6px}
+.paneldesc{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.psection{font-size:11px;font-weight:700;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.psection:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.ctl{margin-bottom:14px}
+.ctl label{display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:6px}
+.ctl .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+select,input[type=number]{font-family:var(--font);font-size:13px;padding:6px 9px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);cursor:pointer;width:100%}
+input[type=number]{cursor:text}
+.ctl .cap{font-size:11px;color:var(--faint);margin-top:6px;line-height:1.4}
+.bbtn{font-family:var(--font);font-weight:600;font-size:12px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:#fff;color:var(--text);cursor:pointer;width:100%}
+.bbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- cards, kpis ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h3{font-size:13.5px;font-weight:700;color:var(--ink);margin:0 0 2px}
+.card .cardsub{font-size:11.5px;color:var(--faint);margin:0 0 12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi .lab{font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.03em}
+.kpi .num{font-size:23px;font-weight:800;color:var(--ink);margin-top:3px}
+.kpi .cmp{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ---------- misc ---------- */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:2px 0 14px;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.note{font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.5}
+.chart{width:100%;overflow-x:auto}
+
+/* ---------- model QA table ---------- */
+table.qatable{width:100%;border-collapse:collapse;font-size:12.5px}
+table.qatable th{text-align:left;font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--line-strong)}
+table.qatable td{padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.qatable tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:var(--pill);white-space:nowrap}
+.badge-ok{background:#E3F5E9;color:var(--positive)}
+.badge-issue{background:var(--accent-soft);color:var(--accent-hover)}
+.qaissues{margin:0;padding-left:16px;color:var(--text);font-size:12px;line-height:1.55}
+.qaissues li{margin-bottom:4px}
+.qanotes{color:var(--faint);font-size:11.5px;margin-top:2px;line-height:1.4}
+svg .gl{stroke:var(--line);stroke-width:1}
+svg .ax{stroke:var(--line-strong);stroke-width:1}
+svg .tk{fill:var(--faint);font-size:10px;font-family:var(--font)}
+svg .tky{fill:var(--faint);font-size:10.5px;font-family:var(--font)}
+svg .vlbl{fill:var(--text);font-size:10.5px;font-weight:600;font-family:var(--font)}
+svg .qyr{fill:var(--muted);font-size:10.5px;font-weight:700;font-family:var(--font)}
+svg .blbl{fill:var(--text);font-size:10.5px;font-weight:600;font-family:var(--font);text-anchor:middle}
+
+@media print{
+  .topbar,.rail,.panel{display:none!important}
+  .app{grid-template-columns:1fr}
+  .main{padding:0}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg width="24" height="21" viewBox="0 0 40 35" aria-hidden="true"><path fill="#EB1000" d="M25.3 0H40v35zM14.7 0H0v35zM20 12.8 29.5 35h-6.2l-2.8-7h-6.9z"/></svg>
+    <span class="apptitle">xMX Insights Dashboard</span>
+    <span class="draft">BETA - TO BE VALIDATED</span>
+  </div>
+  <div class="freshness" id="freshness"></div>
+  <div class="topactions">
+    <button class="tbtn" id="btnReset" type="button">↺ Reset filters</button>
+    <a class="tbtn" id="btnFeedback" href="https://git.azr.adobeitc.com/rhays/xMX-Insights/issues/new" target="_blank" rel="noopener">⚑ Request feature or report issue</a>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="rail">
+    <div class="railhead">Views</div>
+    <nav id="rail"></nav>
+    <div class="railnote">Self-contained report generated from a cached Databricks snapshot. Run <code>python build.py --refresh</code> to pull new data, then reopen <code>index.html</code>.</div>
+  </aside>
+
+  <main class="main">
+    <div id="pagehead"></div>
+    <div id="panes"></div>
+  </main>
+
+  <aside class="panel">
+    <div class="panelhead">Controls</div>
+    <div class="paneldesc">Product and Region apply to every view. Each view also has its own quarter scope below.</div>
+
+    <div class="psection">Scope</div>
+    <div class="ctl">
+      <label for="fProduct">Cloud, Product Category</label>
+      <select id="fProduct"></select>
+    </div>
+    <div class="ctl">
+      <label for="fRegion">Region, Geo</label>
+      <select id="fRegion"></select>
+    </div>
+
+    <div id="viewControls"></div>
+  </aside>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const META = DATA.meta;
+const F_MODEL=0, F_QTR=1, F_CAT=2, F_CHAN=3, F_METRIC=4, F_VAL=5;
+const METRIC_IDX = {}; META.metrics.forEach((m,i)=>METRIC_IDX[m]=i);
+const CAT_COLOR = {}; const CAT_LABEL = {};
+META.categories.forEach(c=>{ CAT_COLOR[c.rank]=c.color; CAT_LABEL[c.rank]=c.label; });
+const OTHER_COLOR = '#D9A400';
+const TOTAL_COLOR = '#1473E6';
+
+const VIEWS = [
+  {id:'base-marketing', label:'Base & Marketing ARR Contribution', sub:'Stacked GNARR by category, trend'},
+  {id:'mix', label:'GNARR Contribution Mix', sub:'Same categories, % of total'},
+  {id:'spend-roms', label:'Marketing Spend & RoMS Trend', sub:'Marketing spend + efficiency'},
+  {id:'breakdown', label:'Contribution Breakdown', sub:'Waterfall build-up, one quarter'},
+  {id:'channel-perf', label:'Channel Spend & Performance', sub:'RoMS vs. spend/unit bubble'},
+  {id:'change', label:'Contribution Change', sub:'Waterfall of delta between two quarters'},
+  {id:'model-qa', label:'Model QA', sub:'Latest-model coverage & variable-lineage checks'},
+];
+
+// ---------------------------------------------------------------- state ---
+const state = {
+  view: VIEWS[0].id,
+  product: '*|*',
+  region: '*|*',
+  rangeFrom: META.default_range[0], rangeTo: META.default_range[1],
+  snapshotQ: META.default_snapshot_quarter,
+  topN: 10,
+  changeBegin: META.default_change[0], changeEnd: META.default_change[1],
+  changeTopN: 10,
+};
+
+function matchingModelSet(){
+  const [pc, pcat] = state.product.split('|');
+  const [reg, geo] = state.region.split('|');
+  const set = new Set();
+  META.models.forEach((m,i)=>{
+    if(pc !== '*' && m.product_cloud !== pc) return;
+    if(pcat !== '*' && m.product_category !== pcat) return;
+    if(reg !== '*' && m.region !== reg) return;
+    if(geo !== '*' && m.geo !== geo) return;
+    set.add(i);
+  });
+  return set;
+}
+
+// ------------------------------------------------------------ formatting ---
+function fmtMoney(v){
+  const a = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if(a >= 1e9) return sign + '$' + (a/1e9).toFixed(a>=1e10?0:1) + 'B';
+  if(a >= 1e6) return sign + '$' + (a/1e6).toFixed(a>=1e7?0:1) + 'M';
+  if(a >= 1e3) return sign + '$' + (a/1e3).toFixed(a>=1e4?0:1) + 'K';
+  return sign + '$' + a.toFixed(0);
+}
+function fmtMoneySigned(v){ return (v>0?'+':'') + fmtMoney(v); }
+function fmtPct(v, dp){ return (v*100).toFixed(dp==null?0:dp) + '%'; }
+function fmtRatio(v){ return v.toFixed(2); }
+function fmtQ(q){ return q.split('-')[1]; }
+function fmtYr(q){ return q.split('-')[0]; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// -------------------------------------------------------------- SVG util ---
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, children){
+  const e = document.createElementNS(SVGNS, tag);
+  if(attrs) for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(children) children.forEach(c=>c && e.appendChild(c));
+  return e;
+}
+function textEl(x, y, cls, s, extra){
+  const t = el('text', Object.assign({x, y, class:cls}, extra||{}));
+  t.textContent = s;
+  return t;
+}
+function niceStep(range, targetTicks){
+  const raw = range / Math.max(1, targetTicks);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const norm = raw / mag;
+  let step;
+  if(norm <= 1) step = 1; else if(norm <= 2) step = 2; else if(norm <= 5) step = 5; else step = 10;
+  return step * mag;
+}
+function niceScale(min, max, targetTicks){
+  if(min > 0) min = 0;
+  if(max < 0) max = 0;
+  if(min === max){ max = min + 1; }
+  const step = niceStep(max - min, targetTicks);
+  const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
+  const ticks = [];
+  for(let v = niceMin; v <= niceMax + step*0.001; v += step) ticks.push(Math.round(v*1e6)/1e6);
+  return {min: niceMin, max: niceMax, ticks};
+}
+
+// x-axis quarter labels with a year row underneath (matches the PDF's two-row axis)
+function drawQuarterAxis(svg, quarters, x0, x1, y, bandW){
+  const g = el('g');
+  let runStart = 0;
+  for(let i=0;i<quarters.length;i++){
+    const cx = x0 + bandW*(i+0.5);
+    g.appendChild(textEl(cx, y, 'tk', fmtQ(quarters[i]), {'text-anchor':'middle'}));
+    const last = i === quarters.length-1;
+    if(last || fmtYr(quarters[i+1]) !== fmtYr(quarters[i])){
+      const midX = x0 + bandW*((runStart+i+1)/2);
+      g.appendChild(textEl(midX, y+16, 'qyr', fmtYr(quarters[i]), {'text-anchor':'middle'}));
+      runStart = i+1;
+    }
+  }
+  svg.appendChild(g);
+}
+
+function drawYAxis(svg, scale, x0, x1, y0, y1, fmt){
+  const g = el('g');
+  scale.ticks.forEach(t=>{
+    const y = y0 + (y1-y0) * (1 - (t-scale.min)/(scale.max-scale.min));
+    g.appendChild(el('line', {x1:x0, x2:x1, y1:y, y2:y, class:'gl'}));
+    g.appendChild(textEl(x0-8, y+3, 'tky', fmt(t), {'text-anchor':'end'}));
+  });
+  svg.appendChild(g);
+}
+
+// ---------------------------------------------------------- aggregations ---
+function categoryByQuarter(metricName, qFrom, qTo, models){
+  const metric = METRIC_IDX[metricName];
+  const n = qTo - qFrom + 1;
+  const byCat = {1:new Array(n).fill(0),2:new Array(n).fill(0),3:new Array(n).fill(0),4:new Array(n).fill(0),5:new Array(n).fill(0)};
+  for(const row of DATA.facts){
+    if(row[F_METRIC] !== metric) continue;
+    if(!models.has(row[F_MODEL])) continue;
+    const qi = row[F_QTR] - qFrom;
+    if(qi < 0 || qi >= n) continue;
+    byCat[row[F_CAT]][qi] += row[F_VAL];
+  }
+  return byCat;
+}
+
+function channelTotalsForQuarter(metricName, qIdx, models){
+  const metric = METRIC_IDX[metricName];
+  const totals = new Map(); // chanIdx -> {value, cat}
+  for(const row of DATA.facts){
+    if(row[F_METRIC] !== metric) continue;
+    if(row[F_QTR] !== qIdx) continue;
+    if(!models.has(row[F_MODEL])) continue;
+    const key = row[F_CHAN];
+    const cur = totals.get(key) || {value:0, cat:row[F_CAT]};
+    cur.value += row[F_VAL];
+    totals.set(key, cur);
+  }
+  return totals;
+}
+
+function metricByChannelForQuarter(qIdx, models){
+  // chanIdx -> {cat, arr, units, spend}
+  const m = new Map();
+  for(const row of DATA.facts){
+    if(row[F_QTR] !== qIdx) continue;
+    if(!models.has(row[F_MODEL])) continue;
+    const key = row[F_CHAN];
+    let cur = m.get(key);
+    if(!cur){ cur = {cat:row[F_CAT], arr:0, units:0, spend:0}; m.set(key, cur); }
+    if(row[F_METRIC] === METRIC_IDX.arr_contribution) cur.arr += row[F_VAL];
+    else if(row[F_METRIC] === METRIC_IDX.unit_contribution) cur.units += row[F_VAL];
+    else if(row[F_METRIC] === METRIC_IDX.spend) cur.spend += row[F_VAL];
+  }
+  return m;
+}
+
+function channelName(chanIdx){
+  const label = META.chan_labels[chanIdx];
+  const i = label.indexOf(' - ');
+  return i < 0 ? label : label.substring(i+3);
+}
+
+// ================================================================ VIEWS ===
+
+function renderPageHead(view){
+  const head = document.getElementById('pagehead');
+  head.innerHTML = `
+    <div class="gate">xMX Insights</div>
+    <h1>${esc(view.label)}</h1>
+    <p class="psub">${esc(view.sub)}</p>
+  `;
+}
+
+function scopeChips(){
+  const prodOpt = META.product_options.find(o=>o.value===state.product);
+  const regOpt = META.region_options.find(o=>o.value===state.region);
+  return `<div class="chips">
+    <span class="chip">Product: <b>${esc(prodOpt?prodOpt.label:'All Products')}</b></span>
+    <span class="chip">Region: <b>${esc(regOpt?regOpt.label:'All Regions')}</b></span>
+  </div>`;
+}
+
+// ---- shared combo chart (stacked bars + optional secondary-axis line) ----
+function drawComboChart(container, opts){
+  // opts: {quarters, series:[{rank,label,color,values}], line:{label,color,values}, moneyLeft:true, lineFmt}
+  const W = 900, H = 380, padL = 66, padR = opts.line ? 60 : 24, padT = 26, padB = 46;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = opts.quarters.length;
+  const bandW = plotW / Math.max(1,n);
+  const barW = Math.min(46, bandW*0.6);
+
+  const totals = opts.quarters.map((_,i)=>opts.series.reduce((s,ser)=>s+ser.values[i],0));
+  const minStack = Math.min(0, ...totals);
+  const maxStack = Math.max(0, ...totals);
+  const scale = niceScale(minStack, maxStack, 6);
+
+  const svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:'100%', height:H});
+  drawYAxis(svg, scale, padL, W-padR, padT, padT+plotH, fmtMoney);
+  svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:padT+plotH, y2:padT+plotH, class:'ax'}));
+  drawQuarterAxis(svg, opts.quarters, padL, W-padR, padT+plotH+16, bandW);
+
+  const yOf = v => padT + plotH * (1 - (v-scale.min)/(scale.max-scale.min));
+
+  // stack positive series upward from 0, negative series downward from 0
+  for(let i=0;i<n;i++){
+    let cumPos = 0, cumNeg = 0;
+    const x = padL + bandW*i + (bandW-barW)/2;
+    opts.series.forEach(ser=>{
+      const v = ser.values[i];
+      if(!v) return;
+      if(v > 0){
+        const y1 = yOf(cumPos+v), y2 = yOf(cumPos);
+        svg.appendChild(el('rect', {x, y:y1, width:barW, height:Math.max(0,y2-y1), fill:ser.color}));
+        cumPos += v;
+      } else {
+        const y1 = yOf(cumNeg), y2 = yOf(cumNeg+v);
+        svg.appendChild(el('rect', {x, y:y1, width:barW, height:Math.max(0,y2-y1), fill:ser.color}));
+        cumNeg += v;
+      }
+    });
+    const total = totals[i];
+    const labelY = total >= 0 ? yOf(cumPos) - 6 : yOf(cumNeg) + 14;
+    svg.appendChild(textEl(x+barW/2, labelY, 'vlbl', fmtMoney(total), {'text-anchor':'middle'}));
+  }
+
+  if(opts.line){
+    const lv = opts.line.values;
+    const lmin = Math.min(...lv, 0), lmax = Math.max(...lv, 0);
+    const lscale = niceScale(lmin, lmax, 5);
+    const lyOf = v => padT + plotH * (1 - (v-lscale.min)/(lscale.max-lscale.min));
+    // secondary axis on the right
+    const g = el('g');
+    lscale.ticks.forEach(t=>{
+      const y = lyOf(t);
+      g.appendChild(textEl(W-padR+8, y+3, 'tky', opts.lineFmt ? opts.lineFmt(t) : fmtMoney(t), {'text-anchor':'start', fill:opts.line.color}));
+    });
+    svg.appendChild(g);
+    let d = '';
+    opts.quarters.forEach((q,i)=>{
+      const cx = padL + bandW*(i+0.5);
+      const cy = lyOf(lv[i]);
+      d += (i===0?'M':'L') + cx.toFixed(1) + ',' + cy.toFixed(1) + ' ';
+    });
+    svg.appendChild(el('path', {d, fill:'none', stroke:opts.line.color, 'stroke-width':2.5}));
+    opts.quarters.forEach((q,i)=>{
+      const cx = padL + bandW*(i+0.5);
+      const cy = lyOf(lv[i]);
+      svg.appendChild(el('circle', {cx, cy, r:3.5, fill:opts.line.color}));
+      svg.appendChild(textEl(cx, cy - 9, 'vlbl', (opts.lineFmt?opts.lineFmt(lv[i]):fmtMoney(lv[i])), {'text-anchor':'middle', fill:opts.line.color}));
+    });
+  }
+
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
+function categoryLegend(ranks){
+  return `<div class="legend">${ranks.map(r=>`<span><i class="dot" style="background:${CAT_COLOR[r]}"></i>${esc(CAT_LABEL[r])}</span>`).join('')}</div>`;
+}
+
+// ---- View 1: Base & Marketing ARR Contribution ----
+function renderBaseMarketing(main, models){
+  const qFrom = state.rangeFrom, qTo = state.rangeTo;
+  const quarters = META.quarters.slice(qFrom, qTo+1);
+  const byCat = categoryByQuarter('arr_contribution', qFrom, qTo, models);
+  const ranks = [1,2,3,4,5];
+  const series = ranks.map(r=>({rank:r, color:CAT_COLOR[r], label:CAT_LABEL[r], values:byCat[r]}));
+  const marketing = quarters.map((_,i)=>[2,3,4,5].reduce((s,r)=>s+byCat[r][i],0));
+  const totalMkt = marketing.reduce((a,b)=>a+b,0);
+  const totalAll = quarters.reduce((s,_,i)=>s+ranks.reduce((a,r)=>a+byCat[r][i],0), 0);
+
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Total GNARR (range)</div><div class="num">${fmtMoney(totalAll)}</div></div>
+      <div class="kpi"><div class="lab">Marketing Contribution</div><div class="num">${fmtMoney(totalMkt)}</div></div>
+      <div class="kpi"><div class="lab">Marketing Share</div><div class="num">${totalAll?fmtPct(totalMkt/totalAll,1):'—'}</div></div>
+    </div>
+    <div class="card">
+      <h3>Base &amp; Marketing GNARR Contribution</h3>
+      <p class="cardsub">Stacked bars = GNARR by category (left axis). Line = total Marketing contribution (right axis).</p>
+      ${categoryLegend(ranks)}
+      <div class="chart" id="chartMain"></div>
+      <p class="note">Categories 2–5 are the "Marketing" segments the PDF calls out separately; category 1 (Base, incl. halo) is always the largest bar segment.</p>
+    </div>
+  `;
+  drawComboChart(document.getElementById('chartMain'), {
+    quarters, series,
+    line: {label:'Marketing', color: META.marketing_line_color, values: marketing},
+  });
+}
+
+// ---- View 2: GNARR Contribution Mix (100% stacked) ----
+function renderMix(main, models){
+  const qFrom = state.rangeFrom, qTo = state.rangeTo;
+  const quarters = META.quarters.slice(qFrom, qTo+1);
+  const byCat = categoryByQuarter('arr_contribution', qFrom, qTo, models);
+  const ranks = [1,2,3,4,5];
+  const n = quarters.length;
+  const pct = {1:[],2:[],3:[],4:[],5:[]};
+  for(let i=0;i<n;i++){
+    const total = ranks.reduce((s,r)=>s+byCat[r][i],0) || 1;
+    ranks.forEach(r=>pct[r].push(byCat[r][i]/total));
+  }
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="card">
+      <h3>GNARR Contribution Mix</h3>
+      <p class="cardsub">Out of 100% of GNARR, per quarter.</p>
+      ${categoryLegend(ranks)}
+      <div class="chart" id="chartMain"></div>
+    </div>
+  `;
+  draw100StackChart(document.getElementById('chartMain'), {
+    quarters, series: ranks.map(r=>({rank:r, color:CAT_COLOR[r], label:CAT_LABEL[r], values:pct[r]})),
+  });
+}
+
+function draw100StackChart(container, opts){
+  const W = 900, H = 380, padL = 50, padR = 24, padT = 26, padB = 46;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = opts.quarters.length;
+  const bandW = plotW / Math.max(1,n);
+  const barW = Math.min(46, bandW*0.6);
+  const svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:'100%', height:H});
+
+  [0,0.25,0.5,0.75,1].forEach(t=>{
+    const y = padT + plotH*(1-t);
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:y, y2:y, class:'gl'}));
+    svg.appendChild(textEl(padL-8, y+3, 'tky', fmtPct(t,0), {'text-anchor':'end'}));
+  });
+  svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:padT+plotH, y2:padT+plotH, class:'ax'}));
+  drawQuarterAxis(svg, opts.quarters, padL, W-padR, padT+plotH+16, bandW);
+
+  for(let i=0;i<n;i++){
+    let cum = 0;
+    const x = padL + bandW*i + (bandW-barW)/2;
+    opts.series.forEach(ser=>{
+      const v = ser.values[i];
+      if(!v) return;
+      const y1 = padT + plotH*(1-(cum+v)), y2 = padT + plotH*(1-cum);
+      svg.appendChild(el('rect', {x, y:y1, width:barW, height:Math.max(0,y2-y1), fill:ser.color}));
+      if(v > 0.05) svg.appendChild(textEl(x+barW/2, (y1+y2)/2+3, 'vlbl', fmtPct(v,0), {'text-anchor':'middle', fill:'#fff'}));
+      cum += v;
+    });
+  }
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
+// ---- View 3: Marketing Spend & RoMS Trend ----
+function renderSpendRoms(main, models){
+  const qFrom = state.rangeFrom, qTo = state.rangeTo;
+  const quarters = META.quarters.slice(qFrom, qTo+1);
+  const spendByCat = categoryByQuarter('spend', qFrom, qTo, models);
+  const arrByCat = categoryByQuarter('arr_contribution', qFrom, qTo, models);
+  const ranks = [2,3,4,5];
+  const n = quarters.length;
+  const roms = [];
+  for(let i=0;i<n;i++){
+    const sp = ranks.reduce((s,r)=>s+spendByCat[r][i],0);
+    const co = ranks.reduce((s,r)=>s+arrByCat[r][i],0);
+    roms.push(sp ? co/sp : 0);
+  }
+  const totalSpend = quarters.reduce((s,_,i)=>s+ranks.reduce((a,r)=>a+spendByCat[r][i],0),0);
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Total Marketing Spend</div><div class="num">${fmtMoney(totalSpend)}</div></div>
+      <div class="kpi"><div class="lab">Avg Type 1 RoMS</div><div class="num">${fmtRatio(roms.reduce((a,b)=>a+b,0)/(roms.length||1))}</div></div>
+    </div>
+    <div class="card">
+      <h3>Marketing Spend and RoMS Trend</h3>
+      <p class="cardsub">Stacked bars = spend by category (left axis). Line = Type 1 RoMS = marketing contribution ÷ marketing spend (right axis).</p>
+      ${categoryLegend(ranks)}
+      <div class="chart" id="chartMain"></div>
+    </div>
+  `;
+  drawComboChart(document.getElementById('chartMain'), {
+    quarters,
+    series: ranks.map(r=>({rank:r, color:CAT_COLOR[r], label:CAT_LABEL[r], values:spendByCat[r]})),
+    line: {label:'Type 1 RoMS', color: META.roms_line_color, values: roms},
+    lineFmt: fmtRatio,
+  });
+}
+
+// ---- shared waterfall renderer ----
+function drawWaterfall(container, bars){
+  // bars: [{label, value, color, isTotal}]  (isTotal bars draw from 0, others float)
+  const W = Math.max(900, bars.length*90), H = 420, padL = 70, padR = 20, padT = 30, padB = 90;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = bars.length;
+  const bandW = plotW / n;
+  const barW = Math.min(64, bandW*0.62);
+
+  let running = 0;
+  const positions = bars.map(b=>{
+    if(b.isTotal){ const p = {from:0, to:b.value}; running = b.value; return p; }
+    const from = running, to = running + b.value; running = to; return {from, to};
+  });
+  const allVals = positions.flatMap(p=>[p.from,p.to]);
+  const scale = niceScale(Math.min(0,...allVals), Math.max(0,...allVals), 6);
+  const yOf = v => padT + plotH*(1-(v-scale.min)/(scale.max-scale.min));
+
+  const svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:W, height:H});
+  drawYAxis(svg, scale, padL, W-padR, padT, padT+plotH, fmtMoney);
+  svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:padT+plotH, y2:padT+plotH, class:'ax'}));
+
+  // connector lines between bars
+  for(let i=0;i<n-1;i++){
+    const x = padL + bandW*(i+1);
+    const y = yOf(positions[i].to);
+    svg.appendChild(el('line', {x1:x-(bandW-barW)/2, x2:x+(bandW-barW)/2, y1:y, y2:y, stroke:'var(--line-strong)', 'stroke-dasharray':'3,2'}));
+  }
+
+  bars.forEach((b,i)=>{
+    const p = positions[i];
+    const x = padL + bandW*i + (bandW-barW)/2;
+    const y1 = yOf(Math.max(p.from,p.to)), y2 = yOf(Math.min(p.from,p.to));
+    svg.appendChild(el('rect', {x, y:y1, width:barW, height:Math.max(1,y2-y1), fill:b.color}));
+    const labelVal = b.isTotal ? b.value : (p.to - p.from);
+    const above = (b.isTotal ? b.value >= 0 : p.to >= p.from);
+    const ly = above ? y1 - 8 : y2 + 14;
+    svg.appendChild(textEl(x+barW/2, ly, 'vlbl', (b.isTotal?fmtMoney(labelVal):fmtMoneySigned(labelVal)), {'text-anchor':'middle'}));
+    // x-axis label, wrapped across up to 3 lines
+    const words = b.label.split(' ');
+    const lines = [];
+    let cur = '';
+    words.forEach(w=>{
+      if((cur+' '+w).trim().length > 14){ lines.push(cur.trim()); cur = w; } else { cur = (cur+' '+w).trim(); }
+    });
+    if(cur) lines.push(cur);
+    lines.slice(0,3).forEach((ln,li)=>{
+      svg.appendChild(textEl(x+barW/2, padT+plotH+16+li*11, 'blbl', ln));
+    });
+  });
+
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
+// ---- View 4: Contribution Breakdown (true waterfall) ----
+function renderBreakdown(main, models){
+  const qIdx = state.snapshotQ;
+  const totals = channelTotalsForQuarter('arr_contribution', qIdx, models);
+  const rows = [...totals.entries()].map(([chanIdx, o])=>({label: META.chan_labels[chanIdx], value:o.value, cat:o.cat}));
+  rows.sort((a,b)=>b.value - a.value);
+  const grandTotal = rows.reduce((s,r)=>s+r.value, 0);
+
+  const topN = state.topN;
+  const top = rows.slice(0, Math.max(0,topN-1));
+  const rest = rows.slice(Math.max(0,topN-1));
+  const restSum = rest.reduce((s,r)=>s+r.value, 0);
+  const combined = top.slice();
+  if(rest.length) combined.push({label:'Others', value:restSum, cat:null, isOther:true});
+  combined.sort((a,b)=>b.value - a.value);
+
+  const bars = combined.map(r=>({
+    label: r.label, value: r.value,
+    color: r.isOther ? OTHER_COLOR : CAT_COLOR[r.cat],
+  }));
+  bars.push({label:'Total', value: grandTotal, color: TOTAL_COLOR, isTotal:true});
+
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="chips"><span class="chip">Quarter: <b>${esc(META.quarters[qIdx])}</b></span></div>
+    <div class="card">
+      <h3>Contribution Breakdown</h3>
+      <p class="cardsub">Cumulative build-up of GNARR contribution by channel for the selected quarter, sorted largest to smallest, with the remainder bucketed into "Others".</p>
+      <div class="chart" id="chartMain"></div>
+      <p class="note">${rows.length} channels in total for this scope; showing top ${top.length}${rest.length?` + Others (${rest.length} channels)`:''}.</p>
+    </div>
+  `;
+  drawWaterfall(document.getElementById('chartMain'), bars);
+}
+
+// ---- View 5: Channel Spend & Performance (bubble) ----
+function renderChannelPerf(main, models){
+  const qIdx = state.snapshotQ;
+  const byChan = metricByChannelForQuarter(qIdx, models);
+  const points = [];
+  byChan.forEach((v, chanIdx)=>{
+    if(![2,3,4].includes(v.cat)) return;
+    if(v.spend <= 0 || v.units <= 0) return;
+    points.push({
+      label: channelName(chanIdx), cat: v.cat,
+      x: v.arr / v.spend, y: v.spend / v.units, size: v.spend,
+    });
+  });
+
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="chips"><span class="chip">Quarter: <b>${esc(META.quarters[qIdx])}</b></span></div>
+    <div class="card">
+      <h3>Channel Spend &amp; Performance</h3>
+      <p class="cardsub">Bubble size = spend. X = Type 1 RoMS (contribution ÷ spend). Y = spend per unit.</p>
+      ${categoryLegend([2,3,4])}
+      <div class="chart" id="chartMain"></div>
+      <p class="note">Only channels with both spend and unit contribution &gt; 0 are shown (${points.length} channels).</p>
+    </div>
+  `;
+  drawBubbleChart(document.getElementById('chartMain'), points);
+}
+
+function drawBubbleChart(container, points){
+  const W = 900, H = 440, padL = 70, padR = 30, padT = 20, padB = 46;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const svg = el('svg', {viewBox:`0 0 ${W} ${H}`, width:'100%', height:H});
+  if(!points.length){
+    svg.appendChild(textEl(W/2, H/2, 'tk', 'No channels with both spend and units for this scope/quarter.', {'text-anchor':'middle'}));
+    container.innerHTML=''; container.appendChild(svg); return;
+  }
+  const xs = points.map(p=>p.x), ys = points.map(p=>p.y), sizes = points.map(p=>p.size);
+  const xScale = niceScale(Math.min(0,...xs), Math.max(0,...xs), 6);
+  const yScale = niceScale(0, Math.max(0,...ys), 6);
+  const maxSize = Math.max(...sizes);
+  const xOf = v => padL + plotW*(v-xScale.min)/(xScale.max-xScale.min);
+  const yOf = v => padT + plotH*(1-(v-yScale.min)/(yScale.max-yScale.min));
+  const rOf = v => 6 + 34*Math.sqrt(v/maxSize);
+
+  yScale.ticks.forEach(t=>{
+    const y = yOf(t);
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:y, y2:y, class:'gl'}));
+    svg.appendChild(textEl(padL-8, y+3, 'tky', fmtMoney(t), {'text-anchor':'end'}));
+  });
+  xScale.ticks.forEach(t=>{
+    const x = xOf(t);
+    svg.appendChild(el('line', {x1:x, x2:x, y1:padT, y2:padT+plotH, class:'gl'}));
+    svg.appendChild(textEl(x, padT+plotH+16, 'tk', fmtRatio(t), {'text-anchor':'middle'}));
+  });
+  svg.appendChild(textEl(W/2, H-6, 'tk', 'Type 1 RoMS', {'text-anchor':'middle'}));
+  svg.appendChild(textEl(14, padT+plotH/2, 'tk', 'Spend / Unit', {'text-anchor':'middle', transform:`rotate(-90 14 ${padT+plotH/2})`}));
+
+  points.sort((a,b)=>b.size-a.size).forEach(p=>{
+    const cx = xOf(p.x), cy = yOf(p.y), r = rOf(p.size);
+    svg.appendChild(el('circle', {cx, cy, r, fill:CAT_COLOR[p.cat], 'fill-opacity':0.72, stroke:CAT_COLOR[p.cat]}));
+    svg.appendChild(textEl(cx, cy - r - 5, 'vlbl', p.label, {'text-anchor':'middle'}));
+  });
+
+  container.innerHTML = '';
+  container.appendChild(svg);
+}
+
+// ---- View 6: Contribution Change (waterfall of deltas) ----
+function renderChange(main, models){
+  const bq = state.changeBegin, eq = state.changeEnd;
+  const beginTotals = channelTotalsForQuarter('arr_contribution', bq, models);
+  const endTotals = channelTotalsForQuarter('arr_contribution', eq, models);
+  const startTotal = [...beginTotals.values()].reduce((s,o)=>s+o.value,0);
+  const endTotal = [...endTotals.values()].reduce((s,o)=>s+o.value,0);
+
+  const chanIdxs = new Set([...beginTotals.keys(), ...endTotals.keys()]);
+  const deltas = [...chanIdxs].map(idx=>{
+    const bv = (beginTotals.get(idx)||{value:0}).value;
+    const ev = (endTotals.get(idx)||{value:0}).value;
+    const cat = (endTotals.get(idx)||beginTotals.get(idx)).cat;
+    return {label: META.chan_labels[idx], value: ev-bv, cat};
+  }).filter(d=>Math.abs(d.value) > 1e-6);
+  deltas.sort((a,b)=>b.value-a.value);
+
+  const topN = state.changeTopN;
+  const top = deltas.slice(0, Math.max(0,topN));
+  const rest = deltas.slice(Math.max(0,topN));
+  const restSum = rest.reduce((s,d)=>s+d.value,0);
+  const combined = top.slice();
+  if(rest.length) combined.push({label:'Other', value:restSum, isOther:true});
+  combined.sort((a,b)=>b.value-a.value);
+
+  const bars = [{label:META.quarters[bq], value:startTotal, color:'#8A8A8A', isTotal:true}];
+  combined.forEach(d=>{
+    bars.push({label:d.label, value:d.value, color: d.isOther ? OTHER_COLOR : (d.value>=0?'var(--positive)':'var(--negative)')});
+  });
+  bars.push({label:META.quarters[eq], value:endTotal, color:'#8A8A8A', isTotal:true});
+
+  const reconciled = Math.abs((startTotal + combined.reduce((s,d)=>s+d.value,0)) - endTotal) < Math.max(1, Math.abs(endTotal)*1e-6);
+  console.assert(reconciled, 'Contribution Change waterfall does not reconcile', {startTotal, endTotal, combined});
+
+  main.innerHTML = `
+    ${scopeChips()}
+    <div class="kpis">
+      <div class="kpi"><div class="lab">${esc(META.quarters[bq])}</div><div class="num">${fmtMoney(startTotal)}</div></div>
+      <div class="kpi"><div class="lab">${esc(META.quarters[eq])}</div><div class="num">${fmtMoney(endTotal)}</div></div>
+      <div class="kpi"><div class="lab">Change</div><div class="num">${fmtMoneySigned(endTotal-startTotal)}</div></div>
+    </div>
+    <div class="card">
+      <h3>Contribution Change</h3>
+      <p class="cardsub">GNARR contribution by channel, ${esc(META.quarters[bq])} → ${esc(META.quarters[eq])}.</p>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--positive)"></i>Increase</span>
+        <span><i class="dot" style="background:var(--negative)"></i>Decrease</span>
+        <span><i class="dot" style="background:${OTHER_COLOR}"></i>Other</span>
+        <span><i class="dot" style="background:#8A8A8A"></i>Total</span>
+      </div>
+      <div class="chart" id="chartMain"></div>
+    </div>
+  `;
+  drawWaterfall(document.getElementById('chartMain'), bars);
+}
+
+// ---- View 7: Model QA (latest-model coverage / variable-lineage checks) ----
+function renderModelQA(main){
+  const qa = DATA.qa;
+  if(!qa){
+    main.innerHTML = `
+      <div class="card">
+        <h3>Model QA</h3>
+        <p class="cardsub">No QA data available yet. Run <code>python qa.py</code> (then <code>python build.py</code>) to populate this tab.</p>
+      </div>`;
+    return;
+  }
+  const rows = qa.models.map(m=>{
+    const badge = m.status==='OK'
+      ? `<span class="badge badge-ok">✓ OK</span>`
+      : `<span class="badge badge-issue">✗ ${m.issues.length} issue${m.issues.length===1?'':'s'}</span>`;
+    const issuesHtml = m.issues.length
+      ? `<ul class="qaissues">${m.issues.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>`
+      : `<span class="qanotes">No issues.</span>`;
+    const notesHtml = (m.notes && m.notes.length)
+      ? `<div class="qanotes">${m.notes.map(n=>esc(n)).join('<br>')}</div>` : '';
+    return `<tr>
+      <td><b>${esc(m.model_key)}</b><div class="qanotes">${esc(m.region)} (${esc(m.geo)}) &middot; ${esc(m.product_cloud)} ${esc(m.product_category)} &middot; v${esc(m.model_version)}</div></td>
+      <td>${badge}</td>
+      <td>${issuesHtml}${notesHtml}</td>
+    </tr>`;
+  }).join('');
+
+  main.innerHTML = `
+    <div class="chips">
+      <span class="chip">Generated: <b>${esc(qa.generated_at)}</b></span>
+      <span class="chip">Latest models checked: <b>${qa.n_models}</b></span>
+      <span class="chip">Clean: <b>${qa.n_ok}</b></span>
+      <span class="chip">With issues: <b>${qa.n_issues}</b></span>
+    </div>
+    <div class="card">
+      <h3>Model QA — latest-version coverage in xmx_insights</h3>
+      <p class="cardsub">
+        For every model_key that is the latest model_version per (model_category, region, product_category) in
+        gmi_ml.model_manager — the same set gmi_ml.xmx_insights surfaces — this checks that the model_key is
+        present in gmi_ml.channel_contribution, gmi_ml.raw_data_xmx_models, and gmi_ml.variable_lineage; that every
+        variable it uses has a variable_lineage entry; and that every variable_lineage row has a channel populated.
+        Run <code>python qa.py</code> to refresh (writes <code>cache/qa_results.json</code> and
+        <code>xMX Insights QA Report.xlsx</code>).
+      </p>
+      <table class="qatable">
+        <thead><tr><th style="width:26%">Model</th><th style="width:11%">Status</th><th>Issues</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------- controls UI ---
+function optionsHtml(opts, selected){
+  return opts.map(o=>`<option value="${esc(o.value)}" ${o.value===selected?'selected':''}>${esc(o.label)}</option>`).join('');
+}
+
+function renderViewControls(){
+  const c = document.getElementById('viewControls');
+  const quarters = META.quarters;
+  if(['base-marketing','mix','spend-roms'].includes(state.view)){
+    c.innerHTML = `
+      <div class="psection">Quarter Range</div>
+      <div class="ctl row2">
+        <div><label for="cFrom">From</label><select id="cFrom">${optionsHtml(quarters.map((q,i)=>({value:i,label:q})), state.rangeFrom)}</select></div>
+        <div><label for="cTo">To</label><select id="cTo">${optionsHtml(quarters.map((q,i)=>({value:i,label:q})), state.rangeTo)}</select></div>
+      </div>
+      <p class="ctl cap">Applies to the three trend views (Base &amp; Marketing, Mix, Spend &amp; RoMS).</p>
+    `;
+    document.getElementById('cFrom').onchange = e=>{ state.rangeFrom = Math.min(+e.target.value, state.rangeTo); render(); };
+    document.getElementById('cTo').onchange = e=>{ state.rangeTo = Math.max(+e.target.value, state.rangeFrom); render(); };
+  } else if(['breakdown','channel-perf'].includes(state.view)){
+    c.innerHTML = `
+      <div class="psection">Quarter</div>
+      <div class="ctl"><select id="cSnap">${optionsHtml(quarters.map((q,i)=>({value:i,label:q})), state.snapshotQ)}</select></div>
+      ${state.view==='breakdown' ? `
+      <div class="ctl"><label for="cTopN">Top channels shown</label>
+        <select id="cTopN">${[5,8,10,12,15,20].map(n=>`<option value="${n}" ${n===state.topN?'selected':''}>${n}</option>`).join('')}</select>
+      </div>` : ''}
+      <p class="ctl cap">Shared by Contribution Breakdown and Channel Spend &amp; Performance.</p>
+    `;
+    document.getElementById('cSnap').onchange = e=>{ state.snapshotQ = +e.target.value; render(); };
+    if(state.view==='breakdown') document.getElementById('cTopN').onchange = e=>{ state.topN = +e.target.value; render(); };
+  } else if(state.view === 'change'){
+    c.innerHTML = `
+      <div class="psection">Compare Quarters</div>
+      <div class="ctl row2">
+        <div><label for="cBegin">Begin</label><select id="cBegin">${optionsHtml(quarters.map((q,i)=>({value:i,label:q})), state.changeBegin)}</select></div>
+        <div><label for="cEnd">End</label><select id="cEnd">${optionsHtml(quarters.map((q,i)=>({value:i,label:q})), state.changeEnd)}</select></div>
+      </div>
+      <div class="ctl"><label for="cChangeTopN">Top channels shown</label>
+        <select id="cChangeTopN">${[5,8,10,12,15,20].map(n=>`<option value="${n}" ${n===state.changeTopN?'selected':''}>${n}</option>`).join('')}</select>
+      </div>
+    `;
+    document.getElementById('cBegin').onchange = e=>{ state.changeBegin = +e.target.value; render(); };
+    document.getElementById('cEnd').onchange = e=>{ state.changeEnd = +e.target.value; render(); };
+    document.getElementById('cChangeTopN').onchange = e=>{ state.changeTopN = +e.target.value; render(); };
+  } else if(state.view === 'model-qa'){
+    c.innerHTML = `<p class="ctl cap">Not scoped by Product/Region — always checks every latest model_key in gmi_ml.model_manager.</p>`;
+  }
+}
+
+// -------------------------------------------------------------- render ---
+const RENDERERS = {
+  'base-marketing': renderBaseMarketing,
+  'mix': renderMix,
+  'spend-roms': renderSpendRoms,
+  'breakdown': renderBreakdown,
+  'channel-perf': renderChannelPerf,
+  'change': renderChange,
+  'model-qa': renderModelQA,
+};
+
+function render(){
+  const view = VIEWS.find(v=>v.id===state.view);
+  renderPageHead(view);
+  renderViewControls();
+  const main = document.getElementById('panes');
+  const models = matchingModelSet();
+  RENDERERS[state.view](main, models);
+
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.toggle('on', n.dataset.id===state.view));
+}
+
+function renderRail(){
+  const rail = document.getElementById('rail');
+  rail.innerHTML = '';
+  VIEWS.forEach((v,i)=>{
+    const item = document.createElement('div');
+    item.className = 'navitem';
+    item.dataset.id = v.id;
+    item.innerHTML = `<div class="navnum">${i+1}</div><div><div class="navtitle">${esc(v.label)}</div><div class="navsub">${esc(v.sub)}</div></div>`;
+    item.onclick = ()=>{ state.view = v.id; render(); };
+    rail.appendChild(item);
+  });
+}
+
+function renderGlobalFilters(){
+  const fp = document.getElementById('fProduct'), fr = document.getElementById('fRegion');
+  fp.innerHTML = optionsHtml(META.product_options, state.product);
+  fr.innerHTML = optionsHtml(META.region_options, state.region);
+  fp.onchange = e=>{ state.product = e.target.value; render(); };
+  fr.onchange = e=>{ state.region = e.target.value; render(); };
+}
+
+function init(){
+  const fresh = document.getElementById('freshness');
+  fresh.textContent = `Data through ${META.cutoff_quarter} · fetched ${META.fetched_at}`;
+  renderRail();
+  renderGlobalFilters();
+  document.getElementById('btnReset').onclick = ()=>{
+    state.view = VIEWS[0].id;
+    state.product = '*|*'; state.region = '*|*';
+    state.rangeFrom = META.default_range[0]; state.rangeTo = META.default_range[1];
+    state.snapshotQ = META.default_snapshot_quarter; state.topN = 10;
+    state.changeBegin = META.default_change[0]; state.changeEnd = META.default_change[1]; state.changeTopN = 10;
+    renderGlobalFilters();
+    render();
+  };
+  render();
+}
+init();
+</script>
+</body>
+</html>
